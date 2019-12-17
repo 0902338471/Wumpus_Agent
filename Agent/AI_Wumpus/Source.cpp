@@ -269,6 +269,8 @@ void go_next_cell(cell current_cell, int& current_point,bool &finish,int &steps)
 	cin >> key;
 	cout << "Go to cell (" << current_cell.x <<","<< current_cell.y << ")" << endl;
 	cout << "Agent has travelled in " << steps << " step" << endl;
+	cout << "Ways to back home from current cell:" << ways_to_home[current_cell.x][current_cell.y] << endl;
+	reasoning_abstract(current_cell, current_point);
 	if (ways_to_home[current_cell.x][current_cell.y] + steps == limited_step)
 	{
 		cout << "!!!!!Warning, agent has to come back to the start state now!!!!!!!" << endl;
@@ -276,8 +278,6 @@ void go_next_cell(cell current_cell, int& current_point,bool &finish,int &steps)
 		finish = true;
 		return;
 	}
-	cout << "Ways to back home from current cell:" << ways_to_home[current_cell.x][current_cell.y] << endl;
-	reasoning_abstract(current_cell, current_point);
 	for (int i = 0; i < 4; i++)
 	{
 		cell next_cell = cell{ current_cell.x + dx[i],current_cell.y + dy[i] };
