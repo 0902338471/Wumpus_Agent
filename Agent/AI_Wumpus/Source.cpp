@@ -3,6 +3,7 @@
 #include <string>
 #include <fstream>
 #include <sstream>
+#include <queue>
 /*
 ----Outline---
 *********Rule Of Reasoning**********
@@ -17,10 +18,12 @@ using namespace std;
 string environment_map[100][100];
 string map_state[100][100];
 bool explored[100][100];
+bool already_in_queue[100][100];
 bool is_shot[100][100];
 int dx[4] = {-1,0,0,1};//horizontal direction
 int dy[4] = { 0,-1,1,0};//vertical direction
 int ways_to_home[100][100];
+int path_save[100][100];
 const int limited_step = 40;
 const int arrow_point = -100;
 const int gold_point = 100;
@@ -58,6 +61,64 @@ bool read_map(string file_path)
 		}
 	}
 	return true;
+}
+void reset_already_in_queue()
+{
+	for (int i = 0; i < 100; i++)
+	{
+		for (int j = 0; j < 100; j++)
+		{
+			already_in_queue[i][j] = false;
+		}
+	}
+}
+void finding_shortest_path_to_start_cell(cell current_cell)//, cell start_cell, cell)
+{
+	vector<cell> adjacent_cells;
+	adjacent_cells.push_back(cell{ current_cell.x,current_cell.y + 1 });
+	adjacent_cells.push_back(cell{ current_cell.x - 1,current_cell.y });
+	adjacent_cells.push_back(cell{ current_cell.x + 1,current_cell.y });
+	adjacent_cells.push_back(cell{ current_cell.x,current_cell.y - 1 });
+	int min_dis = INT_MAX;
+	for (auto adjacent_cell : adjacent_cells)
+	{
+		if (inside_map(adjacent_cell) && explored[adjacent_cell.x][adjacent_cell.y])
+		{
+			min_dis = min(min_dis, ways_to_home[adjacent_cell.x][adjacent_cell.y]);
+		}
+	}
+	ways_to_home[current_cell.x][current_cell.y] = min_dis + 1;
+	/*
+	reset_already_in_queue();
+	queue<cell> list_cell;
+	list_cell.push(current_cell);
+	bool found_start_state = false;
+	while (!list_cell.empty())
+	{
+		cell head_cell = list_cell.front();
+		list_cell.pop();
+		vector<cell> adjacent_cells;
+		adjacent_cells.push_back(cell{ current_cell.x,current_cell.y + 1 });
+		adjacent_cells.push_back(cell{ current_cell.x - 1,current_cell.y });
+		adjacent_cells.push_back(cell{ current_cell.x + 1,current_cell.y });
+		adjacent_cells.push_back(cell{ current_cell.x,current_cell.y - 1 });
+		for (auto adjacent_cell : adjacent_cells)
+		{
+			if (inside_map(adjacent_cell) && explored[adjacent_cell.x][adjacent_cell.y] && already_in_queue[adjacent_cell.x][adjacent_cell.y] == false)
+			{
+				path_save[adjacent_cell.x][adjacent_cell.y] = path_save[head_cell.x][head_cell.y] + 1;
+				list_cell.push(adjacent_cell);
+			}
+			if (adjacent_cell.x == start_cell.x && adjacent_cell.y == start_cell.y)
+			{
+				found_start_state = true;
+				ways_to_home[current_cell.x][current_cell.y] = path_save[adjacent_cell.x][adjacent_cell.y];
+				break;
+			}
+		}
+		if (found_start_state == true)
+			break;
+	}*/
 }
 void shoot_cell(cell current_cell, int& current_point)
 {
@@ -204,7 +265,7 @@ void go_next_cell(cell current_cell, int& current_point,bool &finish)
 			if (explored[next_cell.x][next_cell.y] == false && map_state[next_cell.x][next_cell.y] == "safe")
 			{
 				explored[next_cell.x][next_cell.y] = true;
-				ways_to_home[next_cell.x][next_cell.y] = ways_to_home[current_cell.x][current_cell.y] + 1;
+				finding_shortest_path_to_start_cell(next_cell);
 				if (ways_to_home[next_cell.x][next_cell.y] == limited_step / 2)
 				{
 					finish = true;
@@ -224,11 +285,12 @@ void play_games(cell start_cell)
 	int point = 0;
 	environment_map[start_cell.x][start_cell.y] = "-";
 	bool finish = false;
+	explored[start_cell.x][start_cell.y] = true;
 	go_next_cell(start_cell, point,finish);
 }
 int main()
 {
-	string path = "map1.txt";
+	string path = "map_test_an.txt";
 	if (read_map(path)) {
 		/*for (int i = 0; i < 10; i++) {
 			for (int j = 0; j < 10; j++) {
