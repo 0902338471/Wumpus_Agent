@@ -23,8 +23,7 @@ bool is_shot[100][100];
 int dx[4] = {-1,0,0,1};//horizontal direction
 int dy[4] = { 0,-1,1,0};//vertical direction
 int ways_to_home[100][100];
-int path_save[100][100];
-const int limited_step = 40;
+const int limited_step = 20;
 const int arrow_point = -100;
 const int gold_point = 100;
 const int out_cave_point = 10;
@@ -32,6 +31,7 @@ struct cell {
 	int x;
 	int y;
 };
+cell successor[100][100];
 cell start_state = cell{ 0,0 };
 bool inside_map(cell current_cell)
 {
@@ -62,6 +62,16 @@ bool read_map(string file_path)
 	}
 	return true;
 }
+void tracing_ways_to_home(cell current_cell)
+{
+	cell back_cell = successor[current_cell.x][current_cell.y];
+	while (back_cell.x != start_state.x | back_cell.y != start_state.y)
+	{
+		cout << "Back to cell (" << back_cell.x << "," << back_cell.y << ")" << endl;
+		back_cell = successor[back_cell.x][back_cell.y];
+	}
+	cout << "Back to first cell (" << back_cell.x << "," << back_cell.y << ")";
+}
 void reset_already_in_queue()
 {
 	for (int i = 0; i < 100; i++)
@@ -80,14 +90,17 @@ void finding_shortest_path_to_start_cell(cell current_cell)//, cell start_cell, 
 	adjacent_cells.push_back(cell{ current_cell.x + 1,current_cell.y });
 	adjacent_cells.push_back(cell{ current_cell.x,current_cell.y - 1 });
 	int min_dis = INT_MAX;
+	cell min_dis_cell;
 	for (auto adjacent_cell : adjacent_cells)
 	{
 		if (inside_map(adjacent_cell) && explored[adjacent_cell.x][adjacent_cell.y])
 		{
 			min_dis = min(min_dis, ways_to_home[adjacent_cell.x][adjacent_cell.y]);
+			min_dis_cell = adjacent_cell;
 		}
 	}
 	ways_to_home[current_cell.x][current_cell.y] = min_dis + 1;
+	successor[current_cell.x][current_cell.y] = min_dis_cell;
 	/*
 	reset_already_in_queue();
 	queue<cell> list_cell;
@@ -248,13 +261,21 @@ void reasoning_abstract(cell current_cell, int& current_point)
 		reasoning_ok(current_cell);
 	}
 }
-void go_next_cell(cell current_cell, int& current_point,bool &finish)
+void go_next_cell(cell current_cell, int& current_point,bool &finish,int &steps)
 {
 	//exploring adjacent cell
 	int key;
 	cout << "Enter to go" << endl;
 	cin >> key;
 	cout << "Go to cell (" << current_cell.x <<","<< current_cell.y << ")" << endl;
+	cout << "Agent has travelled in " << steps << " step" << endl;
+	if (ways_to_home[current_cell.x][current_cell.y] + steps == limited_step)
+	{
+		cout << "!!!!!Warning, agent has to come back to the start state now!!!!!!!" << endl;
+		tracing_ways_to_home(current_cell);
+		finish = true;
+		return;
+	}
 	cout << "Ways to back home from current cell:" << ways_to_home[current_cell.x][current_cell.y] << endl;
 	reasoning_abstract(current_cell, current_point);
 	for (int i = 0; i < 4; i++)
@@ -266,15 +287,15 @@ void go_next_cell(cell current_cell, int& current_point,bool &finish)
 			{
 				explored[next_cell.x][next_cell.y] = true;
 				finding_shortest_path_to_start_cell(next_cell);
-				if (ways_to_home[next_cell.x][next_cell.y] == limited_step / 2)
+				steps += 1;
+				go_next_cell(next_cell, current_point,finish,steps);
+				if (finish)
 				{
-					finish = true;
 					return;
 				}
-				go_next_cell(next_cell, current_point,finish);
+				steps += 1;
 				cout<<"Back to cell(" << current_cell.x << "," << current_cell.y << ")" << endl;
-				if (finish)
-					return;
+				cout << "Agent has travelled in " << steps << " step" << endl;
 			}
 		}
 	}
@@ -286,7 +307,8 @@ void play_games(cell start_cell)
 	environment_map[start_cell.x][start_cell.y] = "-";
 	bool finish = false;
 	explored[start_cell.x][start_cell.y] = true;
-	go_next_cell(start_cell, point,finish);
+	int step = 0;
+	go_next_cell(start_cell, point,finish,step);
 }
 int main()
 {
