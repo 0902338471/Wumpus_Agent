@@ -281,6 +281,8 @@ void play_games(cell start_cell)
 	explored[start_cell.x][start_cell.y] = true;
 	int step = 0;
 	go_next_cell(start_cell, point,finish,step);
+	point += out_cave_point;
+	cout << endl<< "Finishing Game with " << point << " in total " << endl;
 }
 int main()
 {
