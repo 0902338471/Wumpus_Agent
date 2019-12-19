@@ -27,6 +27,7 @@ const int limited_step = 20;
 const int arrow_point = -100;
 const int gold_point = 100;
 const int out_cave_point = 10;
+int map_size;
 struct cell {
 	int x;
 	int y;
@@ -36,7 +37,7 @@ cell start_state = cell{ 0,0 };
 bool inside_map(cell current_cell)
 {
 	//checking whether current_cell is inside map of 10x10
-	if (current_cell.x >= 0 && current_cell.x < 10 && current_cell.y >= 0 && current_cell.y < 10)
+	if (current_cell.x >= 0 && current_cell.x < map_size && current_cell.y >= 0 && current_cell.y < map_size)
 		return true;
 	return false;
 }
@@ -49,7 +50,9 @@ bool read_map(string file_path)
 		return false;
 	}
 	string input, output;
-	for (int i = 0; i < 10; i++) {
+	file >> map_size;
+	getline(file, input);
+	for (int i = 0; i < map_size; i++) {
 		getline(file, input);
 		stringstream X(input);
 		int count = 0;
@@ -74,9 +77,9 @@ void tracing_ways_to_home(cell current_cell)
 }
 void reset_already_in_queue()
 {
-	for (int i = 0; i < 100; i++)
+	for (int i = 0; i < map_size; i++)
 	{
-		for (int j = 0; j < 100; j++)
+		for (int j = 0; j < map_size; j++)
 		{
 			already_in_queue[i][j] = false;
 		}
@@ -101,37 +104,6 @@ void finding_shortest_path_to_start_cell(cell current_cell)//, cell start_cell, 
 	}
 	ways_to_home[current_cell.x][current_cell.y] = min_dis + 1;
 	successor[current_cell.x][current_cell.y] = min_dis_cell;
-	/*
-	reset_already_in_queue();
-	queue<cell> list_cell;
-	list_cell.push(current_cell);
-	bool found_start_state = false;
-	while (!list_cell.empty())
-	{
-		cell head_cell = list_cell.front();
-		list_cell.pop();
-		vector<cell> adjacent_cells;
-		adjacent_cells.push_back(cell{ current_cell.x,current_cell.y + 1 });
-		adjacent_cells.push_back(cell{ current_cell.x - 1,current_cell.y });
-		adjacent_cells.push_back(cell{ current_cell.x + 1,current_cell.y });
-		adjacent_cells.push_back(cell{ current_cell.x,current_cell.y - 1 });
-		for (auto adjacent_cell : adjacent_cells)
-		{
-			if (inside_map(adjacent_cell) && explored[adjacent_cell.x][adjacent_cell.y] && already_in_queue[adjacent_cell.x][adjacent_cell.y] == false)
-			{
-				path_save[adjacent_cell.x][adjacent_cell.y] = path_save[head_cell.x][head_cell.y] + 1;
-				list_cell.push(adjacent_cell);
-			}
-			if (adjacent_cell.x == start_cell.x && adjacent_cell.y == start_cell.y)
-			{
-				found_start_state = true;
-				ways_to_home[current_cell.x][current_cell.y] = path_save[adjacent_cell.x][adjacent_cell.y];
-				break;
-			}
-		}
-		if (found_start_state == true)
-			break;
-	}*/
 }
 void shoot_cell(cell current_cell, int& current_point)
 {
